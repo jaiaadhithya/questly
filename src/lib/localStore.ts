@@ -27,6 +27,8 @@ export type LocalTopic = {
   checkpoint_name: string;
   order: number;
   video_url?: string | null;
+  // Persist per-topic tutor persona selection
+  tutor_persona?: string | null;
 };
 
 const key = (k: string) => `local:${k}`;

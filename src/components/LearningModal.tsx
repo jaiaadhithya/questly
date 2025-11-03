@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getVideosForTopic, pingGemini, generateMiniQuizForTopic } from "@/lib/gemini";
+import TutorPanel from "@/components/TutorPanel";
 import { localStore } from "@/lib/localStore";
 
 interface LearningModalProps {
@@ -92,19 +93,57 @@ const LearningModal = ({ isOpen, onClose, checkpoint, studyId }: LearningModalPr
         const u = new URL(url);
         if (u.hostname.includes('youtu.be')) {
           const id = u.pathname.replace('/', '');
-          return `https://www.youtube.com/embed/${id}`;
+          return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&origin=${encodeURIComponent(location.origin)}&enablejsapi=1`;
         }
         if (u.hostname.includes('youtube.com')) {
           const vid = u.searchParams.get('v');
-          if (vid) return `https://www.youtube.com/embed/${vid}`;
+          if (vid) return `https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1&origin=${encodeURIComponent(location.origin)}&enablejsapi=1`;
           if (u.pathname.startsWith('/embed/')) return url;
           if (u.pathname.startsWith('/shorts/')) {
             const id = u.pathname.split('/shorts/')[1];
-            if (id) return `https://www.youtube.com/embed/${id}`;
+            if (id) return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&origin=${encodeURIComponent(location.origin)}&enablejsapi=1`;
           }
         }
       } catch {}
       return null;
+    };
+
+    const toWatch = (url?: string | null) => {
+      if (!url) return null;
+      try {
+        const u = new URL(url);
+        if (u.hostname.includes('youtu.be')) {
+          const id = u.pathname.replace('/', '');
+          return `https://www.youtube.com/watch?v=${id}`;
+        }
+        if (u.hostname.includes('youtube.com')) {
+          const vid = u.searchParams.get('v');
+          if (vid) return `https://www.youtube.com/watch?v=${vid}`;
+          if (u.pathname.startsWith('/embed/')) {
+            const id = u.pathname.split('/embed/')[1];
+            if (id) return `https://www.youtube.com/watch?v=${id}`;
+          }
+          if (u.pathname.startsWith('/shorts/')) {
+            const id = u.pathname.split('/shorts/')[1];
+            if (id) return `https://www.youtube.com/watch?v=${id}`;
+          }
+        }
+      } catch {}
+      return url || null;
+    };
+
+    const isEmbeddable = async (url: string): Promise<boolean> => {
+      const watch = toWatch(url);
+      if (!watch) return false;
+      try {
+        const o = new URL('https://www.youtube.com/oembed');
+        o.searchParams.set('url', watch);
+        o.searchParams.set('format', 'json');
+        const res = await fetch(o.toString());
+        return res.ok;
+      } catch {
+        return false;
+      }
     };
 
     const existing = toEmbed(checkpoint.video_url);
@@ -120,7 +159,18 @@ const LearningModal = ({ isOpen, onClose, checkpoint, studyId }: LearningModalPr
         console.log('[learning-modal] fetching video via search for topic', checkpoint.title);
         const urls = await getVideosForTopic(checkpoint.title, 3);
         console.log('[learning-modal] candidate URLs', urls);
-        const embedCandidate = urls.map(u => toEmbed(u)).find(Boolean) || null;
+        let embedCandidate: string | null = null;
+        for (const u of urls) {
+          try {
+            const ok = await isEmbeddable(u);
+            if (ok) {
+              const e = toEmbed(u);
+              if (e) { embedCandidate = e; break; }
+            }
+          } catch {}
+        }
+        // Fallback: if none validated, still try the first mappable URL
+        if (!embedCandidate) embedCandidate = urls.map(u => toEmbed(u)).find(Boolean) || null;
         console.log('[learning-modal] chosen embed', embedCandidate);
         if (!cancelled) {
           setResolvedEmbedSrc(embedCandidate || null);
@@ -166,6 +216,7 @@ const LearningModal = ({ isOpen, onClose, checkpoint, studyId }: LearningModalPr
                   title="Learning Video"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
                 />
               ) : (
@@ -175,6 +226,9 @@ const LearningModal = ({ isOpen, onClose, checkpoint, studyId }: LearningModalPr
                 </div>
               )}
             </div>
+
+            {/* Agentic Tutor */}
+            <TutorPanel topicTitle={checkpoint?.title || 'This topic'} studyId={studyId} />
 
             {/* Video Description */}
             <div className="bg-background/50 rounded-xl p-6 border border-border/50">

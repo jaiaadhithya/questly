@@ -12,7 +12,9 @@ const MODEL_FALLBACKS = [
   'gemini-1.5-flash-latest',
 ];
 
-const makeEndpoint = (model: string) => `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
+// Use dev proxy to avoid browser CORS when running locally
+const GEMINI_BASE = import.meta.env.VITE_GEMINI_BASE_URL || (import.meta.env.DEV ? '/gemini-api' : 'https://generativelanguage.googleapis.com');
+const makeEndpoint = (model: string) => `${GEMINI_BASE}/v1/models/${model}:generateContent`;
 
 const generateContentWithFallback = async (apiKey: string, body: string): Promise<any> => {
   let lastError: any = null;
@@ -192,7 +194,13 @@ export const searchYouTube = async (query: string, maxResults = 3): Promise<YouT
   url.searchParams.set('maxResults', String(maxResults));
   // Use the concise query directly
   url.searchParams.set('q', query);
-  url.searchParams.set('order', 'viewCount');
+  url.searchParams.set('order', 'relevance');
+  // Ensure results are embeddable outside YouTube
+  url.searchParams.set('videoEmbeddable', 'true');
+  url.searchParams.set('videoSyndicated', 'true');
+  // Bias toward safe, English content
+  url.searchParams.set('safeSearch', 'moderate');
+  url.searchParams.set('relevanceLanguage', 'en');
   url.searchParams.set('key', apiKey);
   console.log('[youtube] request:', url.toString());
   const res = await fetch(url.toString());
@@ -335,8 +343,14 @@ export const getVideosForTopic = async (topic: string, maxResults = 3): Promise<
   const videos = await searchYouTube(baseQuery, maxResults);
   if (videos.length > 0) return videos.map((v) => v.url);
 
-  // Finally, no Gemini fallback per user request; return empty
-  console.warn('[video] No results via CSE or YouTube API; returning empty list');
+  // Finally, use Gemini to fetch links as a fallback if available
+  try {
+    const links = await getYouTubeLinksViaGemini(topic, maxResults);
+    if (links.length > 0) return links.map(l => l.url);
+  } catch (err) {
+    console.warn('[video] Gemini link fallback failed:', err);
+  }
+  console.warn('[video] No video links found via any method');
   return [];
 };
 
@@ -489,5 +503,55 @@ export const pingGemini = async (message: string = 'hi'): Promise<string> => {
   } catch (err) {
     console.error('[gemini] ping failed:', err);
     return '';
+  }
+};
+
+/**
+ * Generate an agentic tutor reply tailored to the topic and persona.
+ * History is a list of { role, content } messages; userMessage is the latest user input.
+ */
+export interface TutorMessage { role: 'user' | 'assistant'; content: string }
+export const generateTutorReply = async (
+  topic: string,
+  persona: string,
+  history: TutorMessage[],
+  userMessage: string
+): Promise<string> => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const fallback = () => {
+    const style = persona || 'Tutor';
+    return `${style}: For ${topic}, a helpful way to think about this is to break it into core ideas, examples, and a quick practice step. What part is confusing you most?`;
+  };
+  if (!apiKey) {
+    console.warn('[gemini] Missing API key for tutor chat');
+    return fallback();
+  }
+
+  const personaGuide = `Persona: ${persona}.
+Tone & style: educational, clear, encouraging. Avoid hallucinations.
+Constraints:
+- Keep replies concise (2–6 sentences) unless asked for more.
+- Use the current topic "${topic}" as context.
+- If uncertain, ask a clarifying follow-up question.
+- Provide simple examples or steps when helpful.
+`;
+
+  const convo = history
+    .slice(-10)
+    .map(m => `${m.role === 'user' ? 'User' : 'Tutor'}: ${m.content}`)
+    .join('\n');
+
+  const prompt = `${personaGuide}
+Conversation so far:\n${convo}\nUser: ${userMessage}\n\nTutor:`;
+
+  try {
+    const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+    const data = await generateContentWithFallback(apiKey, body);
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const cleaned = String(text).trim();
+    return cleaned || fallback();
+  } catch (err) {
+    console.warn('[gemini] tutor reply generation failed', err);
+    return fallback();
   }
 };
