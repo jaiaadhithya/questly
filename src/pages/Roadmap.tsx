@@ -26,7 +26,7 @@ const Roadmap = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-16 animate-slide-up">
-          <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent gradient-primary">
+          <h1 className="text-5xl font-bold mb-4 text-primary">
             Introduction to React
           </h1>
           <p className="text-xl text-muted-foreground">

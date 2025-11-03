@@ -35,8 +35,7 @@ const Upload = () => {
   const navigate = useNavigate();
 
   const handleCreateNew = () => {
-    toast.success("Creating new study...");
-    setTimeout(() => navigate("/quiz"), 1000);
+    navigate("/upload-materials");
   };
 
   return (
@@ -54,7 +53,7 @@ const Upload = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="w-8 h-8 text-primary animate-pulse-glow" />
-                <h1 className="text-5xl font-bold bg-clip-text text-transparent gradient-primary">
+                <h1 className="text-5xl font-bold text-primary">
                   Questly
                 </h1>
               </div>

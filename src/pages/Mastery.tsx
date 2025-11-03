@@ -52,7 +52,7 @@ const Mastery = () => {
             <Trophy className="w-16 h-16" />
           </div>
           
-          <h1 className="text-6xl font-bold mb-4 bg-clip-text text-transparent gradient-accent">
+          <h1 className="text-6xl font-bold mb-4 text-accent">
             Mastery Achieved!
           </h1>
           
@@ -80,7 +80,7 @@ const Mastery = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
                 {stat.icon}
               </div>
-              <div className="text-4xl font-bold mb-2 bg-clip-text text-transparent gradient-primary">
+              <div className="text-4xl font-bold mb-2 text-primary">
                 {stat.value}
               </div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>

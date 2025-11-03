@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Upload from "./pages/Upload";
+import UploadMaterials from "./pages/UploadMaterials";
 import Quiz from "./pages/Quiz";
 import Roadmap from "./pages/Roadmap";
 import Mastery from "./pages/Mastery";
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Upload />} />
+          <Route path="/upload-materials" element={<UploadMaterials />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/mastery" element={<Mastery />} />
