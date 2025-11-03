@@ -1,21 +1,41 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload as UploadIcon, FileText, BookOpen, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import UploadCard from "@/components/UploadCard";
+import StudyCard from "@/components/StudyCard";
+
+const studies = [
+  {
+    id: "1",
+    title: "Introduction to React",
+    progress: 65,
+    lastAccessed: "2 days ago",
+    checkpointsCompleted: 5,
+    totalCheckpoints: 8
+  },
+  {
+    id: "2",
+    title: "Machine Learning Basics",
+    progress: 30,
+    lastAccessed: "1 week ago",
+    checkpointsCompleted: 2,
+    totalCheckpoints: 7
+  },
+  {
+    id: "3",
+    title: "Data Structures",
+    progress: 100,
+    lastAccessed: "3 weeks ago",
+    checkpointsCompleted: 6,
+    totalCheckpoints: 6
+  }
+];
 
 const Upload = () => {
   const navigate = useNavigate();
-  const [slides, setSlides] = useState<File[]>([]);
-  const [questions, setQuestions] = useState<File[]>([]);
 
-  const handleProceed = () => {
-    if (slides.length === 0 && questions.length === 0) {
-      toast.error("Please upload at least one file to continue");
-      return;
-    }
-    toast.success("Files uploaded! Generating your personalized quiz...");
+  const handleCreateNew = () => {
+    toast.success("Creating new study...");
     setTimeout(() => navigate("/quiz"), 1000);
   };
 
@@ -29,78 +49,41 @@ const Upload = () => {
 
       <div className="max-w-6xl w-full z-10 animate-slide-up">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Sparkles className="w-8 h-8 text-primary animate-pulse-glow" />
-            <h1 className="text-5xl font-bold bg-clip-text text-transparent gradient-primary">
-              EduPath AI
-            </h1>
-          </div>
-          <p className="text-xl text-muted-foreground">
-            Upload your materials and start your personalized learning journey
-          </p>
-        </div>
-
-        {/* Upload Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <UploadCard
-            title="Lecture Slides"
-            description="Upload your presentation files (PDF, PPTX)"
-            icon={<FileText className="w-6 h-6" />}
-            accept=".pdf,.pptx,.ppt"
-            files={slides}
-            onFilesChange={setSlides}
-          />
-          <UploadCard
-            title="Past Questions"
-            description="Upload previous exam papers (PDF, DOCX)"
-            icon={<BookOpen className="w-6 h-6" />}
-            accept=".pdf,.docx,.doc"
-            files={questions}
-            onFilesChange={setQuestions}
-          />
-        </div>
-
-        {/* Uploaded Files List */}
-        {(slides.length > 0 || questions.length > 0) && (
-          <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-border/50 card-shadow">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <UploadIcon className="w-5 h-5 text-primary" />
-              My Uploads
-            </h3>
-            <div className="space-y-2">
-              {slides.map((file, idx) => (
-                <div key={`slide-${idx}`} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{file.name}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Slide</span>
-                </div>
-              ))}
-              {questions.map((file, idx) => (
-                <div key={`question-${idx}`} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="w-4 h-4 text-secondary" />
-                    <span className="text-sm">{file.name}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Past Paper</span>
-                </div>
-              ))}
+        <div className="mb-12">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Sparkles className="w-8 h-8 text-primary animate-pulse-glow" />
+                <h1 className="text-5xl font-bold bg-clip-text text-transparent gradient-primary">
+                  Questly
+                </h1>
+              </div>
+              <p className="text-xl text-muted-foreground">
+                Your personalized learning adventures
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Proceed Button */}
-        <div className="flex justify-center">
-          <Button
-            onClick={handleProceed}
-            size="lg"
-            className="gradient-primary text-lg px-8 py-6 rounded-xl hover:scale-105 transition-transform glow-primary"
+        {/* Studies Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {studies.map((study) => (
+            <StudyCard key={study.id} {...study} />
+          ))}
+          
+          {/* Create New Study Card */}
+          <div
+            onClick={handleCreateNew}
+            className="group cursor-pointer bg-card/30 backdrop-blur-sm rounded-2xl p-6 border-2 border-dashed border-border hover:border-primary transition-all hover:scale-[1.02] flex flex-col items-center justify-center min-h-[200px] card-shadow hover:glow-primary"
           >
-            <Sparkles className="w-5 h-5 mr-2" />
-            Generate My Learning Path
-          </Button>
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+              <Plus className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Create New Study</h3>
+            <p className="text-sm text-muted-foreground text-center">
+              Start a new learning journey
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Play, CheckCircle2, Lock } from "lucide-react";
+import { Play, CheckCircle2, Lock } from "lucide-react";
 import LearningModal from "@/components/LearningModal";
 import ChatPanel from "@/components/ChatPanel";
 
@@ -27,74 +27,76 @@ const Roadmap = () => {
         {/* Header */}
         <div className="text-center mb-16 animate-slide-up">
           <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent gradient-primary">
-            Your Learning Journey
+            Introduction to React
           </h1>
           <p className="text-xl text-muted-foreground">
-            Follow the path to mastery, one checkpoint at a time
+            Follow the skill tree to mastery
           </p>
         </div>
 
-        {/* Roadmap */}
-        <div className="relative max-w-4xl mx-auto">
-          {/* Connecting Path Line */}
-          <svg
-            className="absolute left-1/2 top-0 -translate-x-1/2 w-1 h-full"
-            style={{ zIndex: 0 }}
-          >
-            <line
-              x1="50%"
-              y1="0"
-              x2="50%"
-              y2="100%"
-              stroke="url(#lineGradient)"
-              strokeWidth="3"
-              strokeDasharray="8 4"
-              className="path-line"
-            />
-            <defs>
-              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(189 94% 43%)" />
-                <stop offset="50%" stopColor="hsl(174 72% 56%)" />
-                <stop offset="100%" stopColor="hsl(38 92% 50%)" />
-              </linearGradient>
-            </defs>
-          </svg>
+        {/* Skill Tree Roadmap */}
+        <div className="relative max-w-2xl mx-auto">
+          {/* Vertical Connection Line */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-1 -translate-x-1/2 bg-gradient-to-b from-primary via-secondary to-accent opacity-30" />
 
           {/* Checkpoints */}
-          <div className="space-y-12 relative z-10">
+          <div className="space-y-8 relative z-10">
             {checkpoints.map((checkpoint, idx) => (
-              <div
-                key={checkpoint.id}
-                className={`flex items-center gap-6 ${
-                  idx % 2 === 0 ? "flex-row" : "flex-row-reverse"
-                }`}
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
-                {/* Card */}
-                <div
-                  className={`flex-1 animate-slide-up ${
-                    checkpoint.unlocked ? "cursor-pointer" : "cursor-not-allowed"
-                  }`}
-                  onClick={() => checkpoint.unlocked && !checkpoint.isFinal && setSelectedCheckpoint(checkpoint.id)}
-                >
+              <div key={checkpoint.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.1}s` }}>
+                <div className="flex items-center gap-6">
+                  {/* Connecting Line to Node */}
+                  <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent to-primary/50" />
+                  
+                  {/* Node */}
+                  <div className="relative flex-shrink-0">
+                    <div
+                      className={`w-20 h-20 rounded-full flex items-center justify-center border-4 transition-all ${
+                        checkpoint.progress === 100
+                          ? "bg-secondary border-secondary shadow-lg shadow-secondary/50 animate-glow"
+                          : checkpoint.unlocked
+                          ? "bg-primary border-primary shadow-lg shadow-primary/50 animate-pulse-glow"
+                          : "bg-muted border-muted-foreground/30"
+                      }`}
+                    >
+                      {checkpoint.progress === 100 ? (
+                        <CheckCircle2 className="w-10 h-10 text-secondary-foreground" />
+                      ) : checkpoint.unlocked ? (
+                        <Play className="w-10 h-10 text-primary-foreground" />
+                      ) : (
+                        <Lock className="w-10 h-10 text-muted-foreground" />
+                      )}
+                    </div>
+                    {checkpoint.progress > 0 && checkpoint.progress < 100 && (
+                      <div className="absolute inset-0 rounded-full border-4 border-accent/50 animate-ping" />
+                    )}
+                  </div>
+
+                  {/* Connecting Line from Node */}
+                  <div className="flex-1 h-0.5 bg-gradient-to-l from-transparent to-primary/50" />
+                </div>
+
+                {/* Content Card */}
+                <div className="mt-4">
                   <div
                     className={`relative group bg-card/50 backdrop-blur-sm rounded-2xl p-6 border-2 transition-all card-shadow ${
                       checkpoint.progress === 100
                         ? "border-secondary glow-accent"
                         : checkpoint.unlocked
-                        ? "border-primary/50 hover:border-primary hover:scale-[1.02]"
-                        : "border-border/30 opacity-60"
+                        ? "border-primary/50 hover:border-primary hover:scale-[1.02] cursor-pointer"
+                        : "border-border/30 opacity-60 cursor-not-allowed"
                     }`}
+                    onClick={() => checkpoint.unlocked && !checkpoint.isFinal && setSelectedCheckpoint(checkpoint.id)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-xl font-semibold">{checkpoint.title}</h3>
-                      {checkpoint.progress === 100 ? (
-                        <CheckCircle2 className="w-6 h-6 text-secondary" />
-                      ) : checkpoint.unlocked ? (
-                        <Play className="w-6 h-6 text-primary" />
-                      ) : (
-                        <Lock className="w-6 h-6 text-muted-foreground" />
-                      )}
+                      <div className="flex items-center gap-2">
+                        {checkpoint.progress === 100 && (
+                          <CheckCircle2 className="w-6 h-6 text-secondary" />
+                        )}
+                        {checkpoint.unlocked && checkpoint.progress < 100 && (
+                          <Play className="w-6 h-6 text-primary" />
+                        )}
+                      </div>
                     </div>
                     
                     {!checkpoint.isFinal && (
@@ -120,27 +122,6 @@ const Roadmap = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Node */}
-                <div className="relative">
-                  <div
-                    className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${
-                      checkpoint.progress === 100
-                        ? "bg-secondary border-secondary animate-glow"
-                        : checkpoint.unlocked
-                        ? "bg-primary border-primary animate-pulse-glow"
-                        : "bg-muted border-muted-foreground/30"
-                    }`}
-                  >
-                    <MapPin className="w-8 h-8" />
-                  </div>
-                  {checkpoint.progress > 0 && checkpoint.progress < 100 && (
-                    <div className="absolute inset-0 rounded-full border-4 border-accent/50 animate-ping" />
-                  )}
-                </div>
-
-                {/* Spacer for alternating layout */}
-                <div className="flex-1" />
               </div>
             ))}
           </div>
