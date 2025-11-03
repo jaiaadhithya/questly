@@ -1,22 +1,83 @@
-import { useState } from "react";
-import { Play, CheckCircle2, Lock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Play, CheckCircle2, Lock, ArrowLeft, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import LearningModal from "@/components/LearningModal";
 import ChatPanel from "@/components/ChatPanel";
+import { localStore, LocalTopic, LocalStudy } from "@/lib/localStore";
+import { toast } from "sonner";
 
-const checkpoints = [
-  { id: 1, title: "Introduction to React", progress: 100, unlocked: true },
-  { id: 2, title: "State Management", progress: 100, unlocked: true },
-  { id: 3, title: "Component Lifecycle", progress: 50, unlocked: true },
-  { id: 4, title: "React Hooks Deep Dive", progress: 0, unlocked: true },
-  { id: 5, title: "Advanced Patterns", progress: 0, unlocked: false },
-  { id: 6, title: "Performance Optimization", progress: 0, unlocked: false },
-  { id: 7, title: "Testing & Debugging", progress: 0, unlocked: false },
-  { id: 8, title: "Mastery", progress: 0, unlocked: false, isFinal: true }
-];
+type RoadmapCheckpoint = {
+  id: number;
+  title: string;
+  progress: number;
+  unlocked: boolean;
+  isFinal?: boolean;
+  video_url?: string | null;
+};
 
 const Roadmap = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const studyId = params.get('studyId');
+
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [study, setStudy] = useState<LocalStudy | null>(null);
+  const [topics, setTopics] = useState<LocalTopic[]>([]);
+
+  const handleSaveProgress = () => {
+    if (study) {
+      // Progress is automatically saved in localStore when checkpoints are completed
+      toast.success("Progress saved successfully!");
+    }
+  };
+
+  const handleExitToDashboard = () => {
+    navigate("/dashboard");
+  };
+
+  useEffect(() => {
+    // Resolve study
+    let activeStudyId = studyId;
+    if (!activeStudyId) {
+      const studies = localStore.getStudies();
+      activeStudyId = studies[0]?.id || null;
+    }
+    if (!activeStudyId) return;
+    const s = localStore.getStudy(activeStudyId);
+    setStudy(s);
+    // If initial assessment not completed, redirect to quiz first
+    if (s && !s.assessment_completed) {
+      navigate(`/quiz?studyId=${s.id}`);
+      return;
+    }
+    const t = localStore.getTopics(activeStudyId) || [];
+    setTopics(t);
+  }, [studyId]);
+
+  const checkpoints: RoadmapCheckpoint[] = useMemo(() => {
+    if (!topics || topics.length === 0) {
+      // Show placeholder while Gemini-derived roadmap is generating
+      return Array.from({ length: 4 }).map((_, idx) => ({
+        id: idx + 1,
+        title: "generating optimized roadmap",
+        progress: 0,
+        unlocked: false,
+      }));
+    }
+    return topics
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((t, idx) => ({
+        id: idx + 1,
+        title: t.checkpoint_name,
+        progress: idx === 0 ? 0 : 0,
+        unlocked: true,
+        video_url: t.video_url ?? null,
+      }));
+  }, [topics]);
 
   return (
     <div className="min-h-screen p-8 relative overflow-hidden">
@@ -24,10 +85,29 @@ const Roadmap = () => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
+        {/* Navigation Header */}
+        <div className="flex justify-between items-center mb-8 animate-slide-up">
+          <Button 
+            variant="outline" 
+            onClick={handleExitToDashboard}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Exit to Dashboard
+          </Button>
+          <Button 
+            onClick={handleSaveProgress}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Progress
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-16 animate-slide-up">
           <h1 className="text-5xl font-bold mb-4 text-primary">
-            Introduction to React
+            {study?.name || 'Roadmap'}
           </h1>
           <p className="text-xl text-muted-foreground">
             Follow the skill tree to mastery
@@ -133,6 +213,7 @@ const Roadmap = () => {
         isOpen={selectedCheckpoint !== null}
         onClose={() => setSelectedCheckpoint(null)}
         checkpoint={checkpoints.find(cp => cp.id === selectedCheckpoint)}
+        studyId={study?.id || null}
       />
 
       {/* Chat Panel */}

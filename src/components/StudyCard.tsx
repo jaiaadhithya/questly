@@ -1,5 +1,4 @@
 import { BookOpen, Calendar, TrendingUp } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface StudyCardProps {
   id: string;
@@ -11,11 +10,9 @@ interface StudyCardProps {
 }
 
 const StudyCard = ({ title, progress, lastAccessed, checkpointsCompleted, totalCheckpoints }: StudyCardProps) => {
-  const navigate = useNavigate();
 
   return (
     <div
-      onClick={() => navigate("/roadmap")}
       className="group cursor-pointer bg-card/50 backdrop-blur-sm rounded-2xl p-6 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-[1.02] card-shadow hover:glow-primary"
     >
       <div className="flex items-start justify-between mb-4">

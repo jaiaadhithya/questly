@@ -7,11 +7,11 @@ interface UploadCardProps {
   description: string;
   icon: React.ReactNode;
   accept: string;
-  files: File[];
+  files?: File[];
   onFilesChange: (files: File[]) => void;
 }
 
-const UploadCard = ({ title, description, icon, accept, files, onFilesChange }: UploadCardProps) => {
+const UploadCard = ({ title, description, icon, accept, files = [], onFilesChange }: UploadCardProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
