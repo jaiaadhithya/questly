@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
+# Questly
 
-## Project info
+Questly is an AI-assisted study companion that turns your uploaded materials into an interactive learning roadmap with checkpoints, embedded videos, and mini-quizzes. Progress is saved locally and can be synced with Supabase in production deployments.
 
-**URL**: https://lovable.dev/projects/a1c7638e-c62d-481d-b167-6a29fadb7f12
+## Overview
 
-## How can I edit this code?
+- Upload slides or PQP files to generate ordered learning checkpoints.
+- Each checkpoint embeds a relevant YouTube video and provides a short mini-quiz.
+- Progress persists locally, so you can exit and resume from the last checkpoint.
+- The default dashboard is the root path (`/`) at `http://localhost:8081/`.
 
-There are several ways of editing your application.
+## AI Responsibilities
 
-**Use Lovable**
+- `Gemma 3` is the final AI that prepares and displays user-facing responses. It receives formatted inputs and produces the final messages shown to the user.
+- `Gemini` is used only for information gathering from the web and files. Gemini retrieves and structures raw information, formats it for Gemma 3, and hands it off. Gemma 3 then prepares the final output for the UI.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a1c7638e-c62d-481d-b167-6a29fadb7f12) and start prompting.
+In the current codebase, Gemini powers topic generation, video query refinement, and mini-quiz creation. Gemma 3 is the designated final assistant for user-visible responses; the UI is architected to consume outputs that are prepared for Gemma 3.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Project Structure
 
-**Use your preferred IDE**
+- `src/pages/Index.tsx` — Root dashboard page (default landing).
+- `src/pages/UploadMaterials.tsx` — Upload and processing flow.
+- `src/pages/Roadmap.tsx` — Interactive skill tree with checkpoints and resume flow.
+- `src/components/LearningModal.tsx` — Video embed and mini-quiz logic per checkpoint.
+- `src/lib/localStore.ts` — Local persistence for studies, topics, quizzes, and resume point.
+- `src/lib/gemini.ts` — Retrieval, formatting, YouTube search, checkpoints, and quiz generation.
+- `src/lib/ollama.ts` — Local LLM utilities (placeholder for Gemma 3 integration and local processing).
+- `src/lib/supabase.ts` — Supabase client and data model stubs.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Node 18+ recommended.
+2. Install dependencies: `npm install`
+3. Copy `.env.example` to `.env` and fill in keys:
+   - `VITE_GEMINI_API_KEY` — Gemini API key for retrieval and formatting.
+   - `VITE_GEMINI_MODEL` — Optional override for Gemini model.
+   - `VITE_GEMINI_BASE_URL` — Optional base URL or dev proxy (default `/gemini-api` locally).
+   - `VITE_YOUTUBE_API_KEY` — YouTube Data API key OR `VITE_GOOGLE_CSE_API_KEY` + `VITE_GOOGLE_CSE_CX`.
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — Supabase credentials (optional for dev/stubs).
+   - `VITE_OLLAMA_HOST`, `VITE_OLLAMA_MODEL` — Optional local LLM host/model for Gemma 3 via Ollama.
 
-Follow these steps:
+## Running Locally
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Start the dev server: `npm run dev`
+- The server selects an available port automatically. Recent runs show `http://localhost:8081/`.
+- Navigate to root `/` to see the default dashboard.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Usage
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Start a new study from the root dashboard.
+- Upload materials (slides/PQP). The app derives checkpoints and topics.
+- Open the Roadmap to follow the skill tree. Click a checkpoint to see the embedded video and take the mini-quiz.
+- On correct quiz submission, the topic is marked completed and your resume point is saved.
+- Click “Exit to Dashboard” on the Roadmap to return to `/`.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Persistence and Resume
 
-**Edit a file directly in GitHub**
+- Checkpoint videos and mini-quizzes persist in `localStorage` under the study’s topics object.
+- Study progress and the last opened checkpoint are tracked, enabling auto-resume.
+- Files involved:
+  - `src/lib/localStore.ts` — `LocalStudy`, `LocalTopic`, `setTopicQuiz`, `getTopicQuiz`, `last_checkpoint_title`, `last_opened_at`.
+  - `src/components/LearningModal.tsx` — Loads persisted quiz/video or generates and saves new ones.
+  - `src/pages/Roadmap.tsx` — Auto-resumes the last checkpoint and exits to root.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Routes
 
-**Use GitHub Codespaces**
+- `/` — Default dashboard (Index).
+- `/upload-materials` — Upload flow for materials.
+- `/roadmap` — Skill tree view; accepts `?studyId`.
+- `/quiz` — Initial assessment (if enabled).
+- Deprecated: `/dashboard` — retained in code but not used for navigation (exit returns to `/`).
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Scripts
 
-## What technologies are used for this project?
+- `npm run dev` — Start dev server.
+- `npm run build` — Production build.
+- `npm run preview` — Preview the build.
 
-This project is built with:
+## Notes for GitHub
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a1c7638e-c62d-481d-b167-6a29fadb7f12) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- This repository is ready for GitHub: comprehensive README, architecture documentation, and environment configuration via `.env`.
+- CI/CD and issue templates can be added on request.
