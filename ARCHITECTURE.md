@@ -21,6 +21,27 @@ This document describes Questly’s end-to-end architecture, emphasizing the rol
 
 ---
 
+## N8N Automation Layer
+
+![N8N Workflow](N8N.jpg)
+
+- Workflow Pipeline
+  - Webhook trigger for external events
+  - HTML builder for formatted outputs
+  - Gmail integration for notifications
+  - Google Sheets for data persistence
+
+- AI Agent Orchestration
+  - Primary: Ollama Chat Model with Simple Memory context
+  - Secondary: Google Gemini Chat Model for specialized tasks
+  - Code Tool for dynamic execution
+  - Sheet Integration for read/write operations
+  - Memory Persistence across agent interactions
+
+The N8N layer automates material processing, notifications, and spreadsheet management with dual AI agents handling intelligent routing and response generation.
+
+---
+
 ## Data Flow Overview
 
 ```mermaid
