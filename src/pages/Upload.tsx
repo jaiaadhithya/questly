@@ -113,7 +113,24 @@ const Upload = () => {
   };
 
   const handleStudyClick = (studyId: string) => {
-    navigate(`/upload-materials?studyId=${studyId}`);
+    // If topics already exist for this study, resume on roadmap; otherwise go to upload
+    const topics = localStore.getTopics(studyId);
+    if (topics && topics.length > 0) {
+      navigate(`/roadmap?studyId=${studyId}`);
+    } else {
+      navigate(`/upload-materials?studyId=${studyId}`);
+    }
+  };
+
+  const handleDeleteStudy = (studyId: string) => {
+    try {
+      localStore.deleteStudy(studyId);
+      setStudies(prev => prev.filter(s => s.id !== studyId));
+      toast.success("Study deleted");
+    } catch (err) {
+      console.error("Failed to delete study:", err);
+      toast.error("Failed to delete study");
+    }
   };
 
   return (
@@ -152,7 +169,7 @@ const Upload = () => {
             <>
               {studies.map((study) => (
                 <div key={study.id} onClick={() => handleStudyClick(study.id)}>
-                  <StudyCard {...study} />
+                  <StudyCard {...study} onDelete={() => handleDeleteStudy(study.id)} />
                 </div>
               ))}
               

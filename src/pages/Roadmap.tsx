@@ -35,7 +35,8 @@ const Roadmap = () => {
   };
 
   const handleExitToDashboard = () => {
-    navigate("/dashboard");
+    // Navigate to the root default dashboard screen
+    navigate("/");
   };
 
   useEffect(() => {
@@ -55,6 +56,12 @@ const Roadmap = () => {
     }
     const t = localStore.getTopics(activeStudyId) || [];
     setTopics(t);
+    // Auto-resume: open last checkpoint if stored
+    if (s?.last_checkpoint_title && t.length > 0) {
+      const sorted = t.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const idx = sorted.findIndex(tp => tp.checkpoint_name === s.last_checkpoint_title);
+      if (idx !== -1) setSelectedCheckpoint(idx + 1);
+    }
   }, [studyId]);
 
   const checkpoints: RoadmapCheckpoint[] = useMemo(() => {
@@ -73,7 +80,7 @@ const Roadmap = () => {
       .map((t, idx) => ({
         id: idx + 1,
         title: t.checkpoint_name,
-        progress: idx === 0 ? 0 : 0,
+        progress: t.completed ? 100 : 0,
         unlocked: true,
         video_url: t.video_url ?? null,
       }));

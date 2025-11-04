@@ -38,8 +38,32 @@ const LearningModal = ({ isOpen, onClose, checkpoint, studyId }: LearningModalPr
     try {
       setQuizLoading(true);
       setQuizItems([]);
+      // First, try to load a persisted quiz for this topic
+      if (studyId) {
+        const saved = localStore.getTopicQuiz(studyId, checkpoint.title);
+        if (saved && saved.length > 0) {
+          const converted = saved.map((q) => ({
+            question: q.question,
+            options: q.options,
+            correctIndex: Math.max(0, q.options.indexOf(q.answer)),
+          }));
+          setQuizItems(converted);
+          setQuizLoading(false);
+          return;
+        }
+      }
+      // No saved quiz: generate and persist
       const items = await generateMiniQuizForTopic(checkpoint.title, 1);
       setQuizItems(items);
+      if (studyId && items.length > 0) {
+        // Convert to LocalQuizItem shape and persist on topic
+        const localItems = items.map((it) => ({
+          question: it.question,
+          options: it.options,
+          answer: it.options[it.correctIndex] ?? it.options[0],
+        }));
+        localStore.setTopicQuiz(studyId, checkpoint.title, localItems);
+      }
     } catch (e) {
       console.warn('[learning-modal] mini quiz generation failed', e);
     } finally {
@@ -57,6 +81,28 @@ const LearningModal = ({ isOpen, onClose, checkpoint, studyId }: LearningModalPr
     const correctIndex = item?.correctIndex ?? 0;
     if (selectedAnswer === correctIndex) {
       toast.success("Correct! Checkpoint completed! 🎉");
+      // Persist completion and progress
+      try {
+        if (studyId && checkpoint?.title) {
+          const topics = localStore.getTopics(studyId) || [];
+          const idx = topics.findIndex(t => t.checkpoint_name === checkpoint.title);
+          if (idx !== -1) {
+            topics[idx] = { ...topics[idx], completed: true };
+            localStore.setTopics(studyId, topics);
+            const total = topics.length || 1;
+            const done = topics.filter(t => t.completed).length;
+            const pct = Math.round((done / total) * 100);
+            localStore.updateStudy(studyId, {
+              progress: pct,
+              last_checkpoint_title: checkpoint.title,
+              last_opened_at: new Date().toISOString(),
+              status: pct >= 100 ? 'completed' : 'in_progress',
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[learning-modal] failed to persist completion', err);
+      }
       setTimeout(() => {
         setShowQuiz(false);
         setSelectedAnswer(null);

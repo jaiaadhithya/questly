@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, TrendingUp } from "lucide-react";
+import { BookOpen, Calendar, TrendingUp, X } from "lucide-react";
 
 interface StudyCardProps {
   id: string;
@@ -7,9 +7,10 @@ interface StudyCardProps {
   lastAccessed: string;
   checkpointsCompleted: number;
   totalCheckpoints: number;
+  onDelete?: () => void;
 }
 
-const StudyCard = ({ title, progress, lastAccessed, checkpointsCompleted, totalCheckpoints }: StudyCardProps) => {
+const StudyCard = ({ title, progress, lastAccessed, checkpointsCompleted, totalCheckpoints, onDelete }: StudyCardProps) => {
 
   return (
     <div
@@ -28,9 +29,20 @@ const StudyCard = ({ title, progress, lastAccessed, checkpointsCompleted, totalC
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-secondary">
-          <TrendingUp className="w-4 h-4" />
-          <span className="text-sm font-medium">{progress}%</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 text-secondary">
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-sm font-medium">{progress}%</span>
+          </div>
+          {onDelete && (
+            <button
+              aria-label="Delete study"
+              className="ml-2 rounded-full p-1.5 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 

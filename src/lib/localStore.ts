@@ -8,6 +8,9 @@ export type LocalStudy = {
   created_at: string;
   // Whether the initial skill assessment quiz has been completed
   assessment_completed?: boolean;
+  // Track resume point within roadmap
+  last_checkpoint_title?: string;
+  last_opened_at?: string;
 };
 
 export type LocalUpload = {
@@ -29,6 +32,10 @@ export type LocalTopic = {
   video_url?: string | null;
   // Persist per-topic tutor persona selection
   tutor_persona?: string | null;
+  // Persist mini quiz items for this topic (single-question by default)
+  quiz_items?: LocalQuizItem[];
+  // Mark checkpoint completion
+  completed?: boolean;
 };
 
 const key = (k: string) => `local:${k}`;
@@ -81,6 +88,18 @@ export const localStore = {
     writeJSON('studies', next);
   },
 
+  deleteStudy(id: string) {
+    // Remove study from list
+    const studies = readJSON<LocalStudy[]>('studies', []);
+    const next = studies.filter(s => s.id !== id);
+    writeJSON('studies', next);
+
+    // Clean up associated local data
+    try { localStorage.removeItem(key(`uploads:${id}`)); } catch {}
+    try { localStorage.removeItem(key(`quiz:${id}`)); } catch {}
+    try { localStorage.removeItem(key(`topics:${id}`)); } catch {}
+  },
+
   addUpload(studyId: string, upload: LocalUpload) {
     const uploads = readJSON<LocalUpload[]>(`uploads:${studyId}`, []);
     uploads.push(upload);
@@ -100,5 +119,20 @@ export const localStore = {
   },
   getTopics(studyId: string): LocalTopic[] {
     return readJSON<LocalTopic[]>(`topics:${studyId}`, []);
+  },
+
+  setTopicQuiz(studyId: string, checkpointTitle: string, items: LocalQuizItem[]) {
+    const topics = readJSON<LocalTopic[]>(`topics:${studyId}`, []);
+    const idx = topics.findIndex(t => t.checkpoint_name === checkpointTitle);
+    if (idx === -1) return;
+    const updated = { ...topics[idx], quiz_items: items } as LocalTopic;
+    topics[idx] = updated;
+    writeJSON(`topics:${studyId}`, topics);
+  },
+
+  getTopicQuiz(studyId: string, checkpointTitle: string): LocalQuizItem[] {
+    const topics = readJSON<LocalTopic[]>(`topics:${studyId}`, []);
+    const t = topics.find(x => x.checkpoint_name === checkpointTitle);
+    return t?.quiz_items || [];
   },
 };
