@@ -123,4 +123,3 @@ sequenceDiagram
 - `Roadmap` resumes from the last checkpoint if available
 - Exit from Roadmap navigates back to `/`
 
----
