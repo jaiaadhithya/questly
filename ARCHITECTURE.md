@@ -59,7 +59,6 @@ This document describes Questly's end-to-end architecture, emphasizing the roles
 The automation layer handles background processing and integration tasks:
 
 - **Webhook Trigger** — Initiates workflows from external events
-- **HTML Builder** — Generates formatted output documents
 - **Gmail Integration** — Sends notifications and updates
 - **Google Sheets** — Persists processed data and logs
 
